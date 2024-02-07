@@ -8,14 +8,14 @@ Works with .NETStandard 2.0 or .NETStandard2.1.
 # Support operator
 |operator|
 |---|
-| ```-``` ```*``` ```+``` ```-``` |
+| `-` `*` `+` `-` |
 
 # Not Support
 - Operator
 
 |operator|
 |---|
-|```>``` ```<``` ```<=``` ```>=``` ```=``` ```<>``` ```&``` ```|``` |
+|`>` `<` `<=` `>=` `=` `<>` `&` `\|` |
 
 - User-Defined Functions
 
