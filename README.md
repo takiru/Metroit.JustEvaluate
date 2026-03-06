@@ -5,7 +5,7 @@ Works with .NETStandard 2.0 or .NETStandard2.1.
 
 [JustEvaluate](https://www.nuget.org/packages/JustEvaluate) is used.
 
-[![NuGet](https://img.shields.io/badge/nuget-v0.1.0-blue.svg)](https://www.nuget.org/packages/Metroit.JustEvaluate/)
+[![NuGet](https://img.shields.io/badge/nuget-v0.2.0-blue.svg)](https://www.nuget.org/packages/Metroit.JustEvaluate/)
 
 # Support operator
 |operator|

@@ -5,6 +5,10 @@ VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Metroit.JustEvaluate", "Metroit.JustEvaluate\Metroit.JustEvaluate.csproj", "{58801AFC-0E1E-4BCC-ABD9-C74357F05B1A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{DDB4EF12-CC4E-5E88-E6FC-71A802F4DE97}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Metroit.JustEvaluate.Test", "Metroit.JustEvaluate.Test\Metroit.JustEvaluate.Test.csproj", "{EE2CAD1C-F2A6-42A7-AACB-4F9AEEB5C470}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,9 +19,16 @@ Global
 		{58801AFC-0E1E-4BCC-ABD9-C74357F05B1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{58801AFC-0E1E-4BCC-ABD9-C74357F05B1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{58801AFC-0E1E-4BCC-ABD9-C74357F05B1A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE2CAD1C-F2A6-42A7-AACB-4F9AEEB5C470}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE2CAD1C-F2A6-42A7-AACB-4F9AEEB5C470}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE2CAD1C-F2A6-42A7-AACB-4F9AEEB5C470}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE2CAD1C-F2A6-42A7-AACB-4F9AEEB5C470}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{EE2CAD1C-F2A6-42A7-AACB-4F9AEEB5C470} = {DDB4EF12-CC4E-5E88-E6FC-71A802F4DE97}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {95E6D224-757F-4A11-A7D3-9A071BDA55FC}

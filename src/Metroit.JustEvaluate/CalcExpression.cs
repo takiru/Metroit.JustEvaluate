@@ -28,26 +28,45 @@ namespace Metroit.JustEvaluate
         private static readonly decimal TestValue = 1;
 
         /// <summary>
-        /// 計算式リスト を取得または設定します。
+        /// 計算式リストを取得または設定します。
         /// </summary>
         [JsonProperty("Items", Required = Required.Always)]
         private List<ICalcItem> calcItems { get; } = new List<ICalcItem>();
 
+        /// <summary>
+        /// 式のアイテムを取得します。
+        /// </summary>
+        [JsonIgnore]
+        public IEnumerable<ICalcItem> Items => calcItems;
+
         private Dictionary<string, CalcParameter> parameters { get; } = new Dictionary<string, CalcParameter>();
 
         /// <summary>
-        /// パラメーター値。
+        /// パラメーター値を取得します。
         /// </summary>
         [JsonIgnore]
         public ReadOnlyDictionary<string, CalcParameter> Parameters => new ReadOnlyDictionary<string, CalcParameter>(parameters);
 
-        /// <summary>
-        /// 新しいインスタンスを生成します。
-        /// </summary>
-        public CalcExpression()
-        {
+        private IEnumerable<Type> _automaticRecognitionTypes = new Type[] { };
 
+        /// <summary>
+        /// 自動認識タイプを取得または設定します。
+        /// </summary>
+        [JsonIgnore]
+        public IEnumerable<Type> AutomaticRecognitionTypes
+        {
+            get => _automaticRecognitionTypes;
+            set
+            {
+                _automaticRecognitionTypes = value ?? throw new ArgumentNullException(nameof(AutomaticRecognitionTypes));
+            }
         }
+
+        /// <summary>
+        /// 自動認識タイプを完全アセンブリ修飾名として扱うかを取得または設定します。
+        /// </summary>
+        [JsonIgnore]
+        public bool HandleAssemblyQualifiedName { get; set; } = false;
 
         /// <summary>
         /// 計算式の表示文字列 を取得します。
@@ -86,6 +105,20 @@ namespace Metroit.JustEvaluate
         }
 
         /// <summary>
+        /// 新しいインスタンスを生成します。
+        /// </summary>
+        public CalcExpression() { }
+
+        /// <summary>
+        /// 新しいインスタンスを生成します。
+        /// </summary>
+        /// <param name="automaticRecognitionTypes">自動認識タイプ。</param>
+        public CalcExpression(IEnumerable<Type> automaticRecognitionTypes)
+        {
+            AutomaticRecognitionTypes = automaticRecognitionTypes;
+        }
+
+        /// <summary>
         /// 計算式を有するかどうかを取得します。
         /// </summary>
         /// <returns>true:有する, false:有しない。</returns>
@@ -93,12 +126,6 @@ namespace Metroit.JustEvaluate
         {
             return calcItems.Count > 0;
         }
-
-        /// <summary>
-        /// 式のアイテムを取得します。
-        /// </summary>
-        [JsonIgnore]
-        public IEnumerable<ICalcItem> Items => calcItems;
 
         /// <summary>
         /// 計算式の要素を末尾に追加します。
@@ -239,6 +266,10 @@ namespace Metroit.JustEvaluate
         /// 試験的な値を使用して計算式を評価し、現在の計算式の妥当性を検証します。
         /// </summary>
         /// <returns>true:妥当, false:不当。</returns>
+        /// <remarks>
+        /// ゼロ除算は妥当とみなします。
+        /// そのため、<see cref="Evaluate()"/>ではゼロ除算による<see cref="CalculationEvaluateFailedException"/>が発生する可能性があります。
+        /// </remarks>
         public bool Validate()
         {
             var parameters = new List<CalcParameter>();
@@ -254,8 +285,13 @@ namespace Metroit.JustEvaluate
 
                 return true;
             }
-            catch (CalculationEvaluateFailedException)
+            catch (CalculationEvaluateFailedException e)
             {
+                if (e.InnerException is DivideByZeroException)
+                {
+                    return true;
+                }
+
                 return false;
             }
         }
@@ -281,6 +317,7 @@ namespace Metroit.JustEvaluate
         /// <summary>
         /// 計算式の要素を追加し、その時点までの計算式を正常化する。
         /// </summary>
+        /// <param name="maybeExpression">元の計算式。</param>
         /// <param name="addItem">追加する計算式の要素。</param>
         private void AddWithNormalizeExpression(CalcExpression maybeExpression, ICalcItem addItem)
         {
@@ -317,6 +354,7 @@ namespace Metroit.JustEvaluate
         /// <summary>
         /// 計算式に追加される開始ブラケットをチェックする。
         /// </summary>
+        /// <param name="maybeExpression">元の計算式。</param>
         /// <param name="addItem">開始ブラケット。</param>
         /// <param name="addAndNormalize">計算式を追加してノーマライズするかどうか。</param>
         /// <param name="ifRaiseCannotAdd">追加できない時に例外とするかどうか。</param>
@@ -356,6 +394,7 @@ namespace Metroit.JustEvaluate
         /// <summary>
         /// 計算式に追加される終了ブラケットをチェックする。
         /// </summary>
+        /// <param name="maybeExpression">元の計算式。</param>
         /// <param name="addItem">終了ブラケット。</param>
         /// <param name="addAndNormalize">計算式を追加してノーマライズするかどうか。</param>
         /// <param name="ifRaiseCannotAdd">追加できない時に例外とするかどうか。</param>
@@ -387,8 +426,13 @@ namespace Metroit.JustEvaluate
 
             // 開始ブラケットの数 = 終了ブラケットの数の場合は許可しない
             // NOTE: (value+value)
-            var startBracketCount = maybeExpression.calcItems.Where(x => x is StartBracketItem || x is WideStartBracketItem).Count();
-            var endBrackeCount = maybeExpression.calcItems.Where(x => x is EndBracketItem || x is WideEndBracketItem).Count();
+            var startBracketCount = maybeExpression.calcItems
+                .Where(x => x is StartBracketItem || x is WideStartBracketItem)
+                .Count();
+            var endBrackeCount = maybeExpression.calcItems
+                .Where(x => x is EndBracketItem || x is WideEndBracketItem)
+                .Count();
+
             if (startBracketCount == endBrackeCount)
             {
                 if (ifRaiseCannotAdd)
@@ -409,6 +453,7 @@ namespace Metroit.JustEvaluate
         /// <summary>
         /// 計算式に追加される数値をチェックする。
         /// </summary>
+        /// <param name="maybeExpression">元の計算式。</param>
         /// <param name="addItem">値。</param>
         /// <param name="addAndNormalize">計算式を追加してノーマライズするかどうか。</param>
         /// <param name="ifRaiseCannotAdd">追加できない時に例外とするかどうか。</param>
@@ -454,6 +499,7 @@ namespace Metroit.JustEvaluate
         /// <summary>
         /// 計算式に追加されるパラメーターをチェックする。
         /// </summary>
+        /// <param name="maybeExpression">元の計算式。</param>
         /// <param name="addItem">パラメーター。</param>
         /// <param name="addAndNormalize">計算式を追加してノーマライズするかどうか。</param>
         /// <param name="ifRaiseCannotAdd">追加できない時に例外とするかどうか。</param>
@@ -510,7 +556,7 @@ namespace Metroit.JustEvaluate
         private void AddParameter(string formulaElement)
         {
             // 既に埋込パラメーターが追加済みの場合は追加しない
-            if (parameters.Where(x => x.Key == formulaElement).Any())
+            if (parameters.Any(x => x.Key == formulaElement))
             {
                 return;
             }
@@ -521,30 +567,32 @@ namespace Metroit.JustEvaluate
         /// <summary>
         /// 計算式に不要となる埋込パラメーターを削除する。
         /// </summary>
-        /// <param name="forumlaElement">埋込パラメーター名。</param>
-        private void RemoveParameter(string forumlaElement)
+        /// <param name="formulaElement">埋込パラメーター名。</param>
+        private void RemoveParameter(string formulaElement)
         {
             // 計算式全体から、対象の埋込パラメーターが残っている場合は削除しない            
-            var parameterExists = calcItems.Where(x =>
+            var parameterExists = calcItems.Any(x =>
+            {
+                if (!(x is IParameterCalcItem p))
                 {
-                    if (!(x is IParameterCalcItem p))
-                    {
-                        return false;
-                    }
-                    if (p.FormulaElement == forumlaElement)
-                    {
-                        return true;
-                    }
                     return false;
-                })
-                .Any();
+                }
+                if (p.FormulaElement == formulaElement)
+                {
+                    return true;
+                }
+                return false;
+            });
 
             if (parameterExists)
             {
                 return;
             }
 
-            var parameterName = parameters.Where(x => x.Key == forumlaElement).Select(x => x.Key).FirstOrDefault();
+            var parameterName = parameters
+                .Where(x => x.Key == formulaElement)
+                .Select(x => x.Key)
+                .FirstOrDefault();
             if (parameterName != null)
             {
                 parameters.Remove(parameterName);
@@ -555,6 +603,7 @@ namespace Metroit.JustEvaluate
         /// <summary>
         /// 計算式に追加される演算子をチェックする。
         /// </summary>
+        /// <param name="maybeExpression">元の計算式。</param>
         /// <param name="addItem">演算子。</param>
         /// <param name="addAndNormalize">計算式を追加してノーマライズするかどうか。</param>
         /// <param name="ifRaiseCannotAdd">追加できない時に例外とするかどうか。</param>
@@ -600,18 +649,17 @@ namespace Metroit.JustEvaluate
         /// <summary>
         /// 現在の計算式を指定されたプロパティセットで実行する。
         /// </summary>
-        /// <param name="propertySets">プロパティセット。</param>
+        /// <param name="parameters">パラメーター情報。</param>
         /// <returns>計算結果。</returns>
-        //private decimal Evaluate(List<IParameterCalcItem> propertySets)
-        private decimal Evaluate(IEnumerable<CalcParameter> parameter)
+        private decimal Evaluate(IEnumerable<CalcParameter> parameters)
         {
             var evaluator = new Evaluator(new Parser(), new Builder(new FunctionsRegistry()), new CompiledExpressionsCache());
 
             try
             {
-                if (parameter.Count() > 0)
+                if (parameters.Count() > 0)
                 {
-                    dynamic param = CalcParameterTypeBuilder.CreateNewObject(parameter);
+                    dynamic param = CalcParameterTypeBuilder.CreateNewObject(parameters);
                     return evaluator.Evaluate(Formula, param);
                 }
 

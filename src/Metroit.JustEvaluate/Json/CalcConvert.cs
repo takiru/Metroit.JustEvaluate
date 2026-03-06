@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Metroit.JustEvaluate.Json
@@ -20,7 +22,7 @@ namespace Metroit.JustEvaluate.Json
                 return string.Empty;
             }
 
-            return JsonConvert.SerializeObject(expression);
+            return JsonConvert.SerializeObject(expression, new CalcExpressionConverter());
         }
 
         /// <summary>
@@ -35,7 +37,23 @@ namespace Metroit.JustEvaluate.Json
                 return new CalcExpression();
             }
 
-            return JsonConvert.DeserializeObject<CalcExpression>(value, new CalcItemConverter());
+            return JsonConvert.DeserializeObject<CalcExpression>(value, new CalcExpressionConverter());
+        }
+
+        /// <summary>
+        /// シリアライズされた文字列から計算式を返却します。
+        /// </summary>
+        /// <param name="value">シリアライズされた文字列。</param>
+        /// <param name="automaticRecognitionTypes">自動認識タイプ。</param>
+        /// <returns>計算式。</returns>
+        public static CalcExpression Deserialize(string value, IEnumerable<Type> automaticRecognitionTypes)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return new CalcExpression();
+            }
+
+            return JsonConvert.DeserializeObject<CalcExpression>(value, new CalcExpressionConverter(automaticRecognitionTypes));
         }
     }
 }
